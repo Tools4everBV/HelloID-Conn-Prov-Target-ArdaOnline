@@ -1,0 +1,74 @@
+[
+    {
+        "key": "UserName",
+        "type": "input",
+        "defaultValue": "",
+        "templateOptions": {
+            "label": "UserName",
+            "description": "The UserName to connect to Arda Online",
+            "required": true
+        }
+    },
+    {
+        "key": "Password",
+        "type": "input",
+        "defaultValue": "",
+        "templateOptions": {
+            "type": "password",
+            "label": "Password",
+            "description": "The Password to connect to Arda Online",
+            "required": true
+        }
+    },
+    {
+        "key": "ClientId",
+        "type": "input",
+        "defaultValue": "",
+        "templateOptions": {
+            "label": "UserName",
+            "description": "The ClientId to connect to Arda Online",
+            "required": true
+        }
+    },
+    {
+        "key": "ClientSecret",
+        "type": "input",
+        "defaultValue": "",
+        "templateOptions": {
+            "type": "password",
+            "label": "ClientSecret",
+            "description": "The ClientSecret to connect to Arda Online",
+            "required": true
+        }
+    },
+    {
+        "key": "BaseUrl",
+        "type": "input",
+        "defaultValue": "",
+        "templateOptions": {
+            "label": "BaseUrl",
+            "description": "The URL to Arda Online.",
+            "required": true
+        }
+    },
+    {
+        "key": "VoucherCode",
+        "type": "input",
+        "defaultValue": "",
+        "templateOptions": {
+            "label": "VoucherCode",
+            "description": "The VoucherCode",
+            "required": true
+        }
+    },
+    {
+        "key": "GroupId",
+        "type": "input",
+        "defaultValue": "",
+        "templateOptions": {
+            "label": "RoleId",
+            "description": "The Id of the group that determines which courses the user can follow",
+            "required": true
+        }
+    }
+]
