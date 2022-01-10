@@ -22,11 +22,12 @@ try {
     # Begin
     Write-Verbose 'Retrieving AccessToken'
     $splatRestParams = @{
-        Uri     = "$($config.BaseUrl)/api/auth/oauth2/token?grant_type=password&client_id=$($config.ClientID)&client_secret=$($config.ClientSecret)&username=$($config.UserName)&password=$($config.Password)"
+        Uri     =  'https://tle-test.thingks.nl/api/auth/oauth2/token/'
         Method  = 'POST'
         Headers =  @{
             "content-type" = "application/x-www-form-urlencoded"
         }
+        Body = "client_id=$($config.ClientId)&client_secret=$($config.ClientSecret)&username=$($config.UserName)&password=$($config.Password)&grant_type=password"
     }
     $accessToken = Invoke-RestMethod @splatRestParams
 
