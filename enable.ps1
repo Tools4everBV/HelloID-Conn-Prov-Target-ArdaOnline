@@ -10,13 +10,40 @@ $config = $configuration | ConvertFrom-Json
 $p = $person | ConvertFrom-Json
 $aRef = $AccountReference | ConvertFrom-Json
 $success = $false
-$auditLogs = [System.Collections.Generic.List[PSCustomObject]]::new()
+$auditLogs = New-Object Collections.Generic.List[PSCustomObject]
 
 # Account mapping
 $account = @{
     externalUserId = $aRef
     expiresAt      = $p.PrimaryContract.EndDate
 }
+
+#region functions
+function Resolve-HTTPError {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory,
+            ValueFromPipeline
+        )]
+        [object]$ErrorObject
+    )
+    process {
+        $httpErrorObj = [PSCustomObject]@{
+            FullyQualifiedErrorId = $ErrorObject.FullyQualifiedErrorId
+            MyCommand             = $ErrorObject.InvocationInfo.MyCommand
+            RequestUri            = $ErrorObject.TargetObject.RequestUri
+            ScriptStackTrace      = $ErrorObject.ScriptStackTrace
+            ErrorMessage          = ''
+        }
+        if ($ErrorObject.Exception.GetType().FullName -eq 'Microsoft.PowerShell.Commands.HttpResponseException') {
+            $httpErrorObj.ErrorMessage = $ErrorObject.ErrorDetails.Message
+        } elseif ($ErrorObject.Exception.GetType().FullName -eq 'System.Net.WebException') {
+            $httpErrorObj.ErrorMessage = [System.IO.StreamReader]::new($ErrorObject.Exception.Response.GetResponseStream()).ReadToEnd()
+        }
+        Write-Output $httpErrorObj
+    }
+}
+#endregion
 
 try {
     # Begin
@@ -30,10 +57,9 @@ try {
         Body = "client_id=$($config.ClientId)&client_secret=$($config.ClientSecret)&username=$($config.UserName)&password=$($config.Password)&grant_type=password"
     }
     $accessToken = Invoke-RestMethod @splatRestParams
-
     Write-Verbose 'Adding token to authorization headers'
     $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
-    $headers.Add("Authorization", "Token $($accessToken.access_token)")
+    $headers.Add("Authorization", "Bearer $($accessToken.access_token)")
 
     # Add an auditMessage showing what will happen during enforcement
     if ($dryRun -eq $true){
@@ -49,7 +75,7 @@ try {
         $splatRestParams = @{
             Uri         = "$($config.BaseUrl)/api/graphql"
             Method      = 'POST'
-            Headers     = $Headers
+            Headers     = $headers
             ContentType = 'application/json'
             Body        = @{
                 query = "mutation (`$input: SyncUsersInput!) {syncUsers(input: `$input) {results {user {externalUserId expiresAt} status errors {path field fieldPrefix message}}}}"
@@ -60,22 +86,30 @@ try {
                 }
             } | ConvertTo-Json -Depth 10
         }
-        $responseUpdateUser = Invoke-RestMethod @splatRestParams
-        if ($responseUpdateUser.data.syncUsers.results[0].status -eq 'updated'){
-            $success = $true
-            $auditLogs.Add([PSCustomObject]@{
-                Message = "Enable account for: [$($p.DisplayName)] was successful."
-                IsError = $false
-            })
-        } else {
-            $errorMessage = $responseUpdateUser.data.syncUsers.results[0].errors[0].message
-            throw $errorMessage
+        $responseEnableUser = Invoke-RestMethod @splatRestParams
+        if ($responseEnableUser.data.syncUsers.results.count -ge 1){
+            if ($responseEnableUser.data.syncUsers.results[0].status -eq 'updated'){
+                $success = $true
+                $auditLogs.Add([PSCustomObject]@{
+                    Message = "Enable account for: [$($p.DisplayName)] was successful."
+                    IsError = $false
+                })
+            } elseif ($null -ne $responseEnableUser.data.syncUsers.results[0].errors) {
+                $errorMessage = $responseEnableUser.data.syncUsers.results[0].errors[0].message
+                throw $errorMessage
+            }
         }
     }
 } catch {
     $success = $false
-    $ex = $_
-    $errorMessage = "Could not enable ArdaOnline account for: [$($p.DisplayName)]. Error: $($ex.Exception.Message)"
+    $ex = $PSItem
+    if ($($ex.Exception.GetType().FullName -eq 'Microsoft.PowerShell.Commands.HttpResponseException') -or
+    $($ex.Exception.GetType().FullName -eq 'System.Net.WebException')) {
+        $errorObj = Resolve-HTTPError -ErrorObject $ex
+        $errorMessage = "Could not enable ArdaOnline account for: [$($p.DisplayName)]. Error: $($errorObj.ErrorMessage)"
+    } else {
+        $errorMessage = "Could not enable ArdaOnline account for: [$($p.DisplayName)]. Error: $($ex.Exception.Message)"
+    }
     Write-Verbose $errorMessage
     $auditLogs.Add([PSCustomObject]@{
         Message = $errorMessage
