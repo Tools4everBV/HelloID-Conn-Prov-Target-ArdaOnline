@@ -24,6 +24,33 @@ $account = @{
     expiresAt      = $p.PrimaryContract.EndDate
 }
 
+#region functions
+function Resolve-HTTPError {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory,
+            ValueFromPipeline
+        )]
+        [object]$ErrorObject
+    )
+    process {
+        $httpErrorObj = [PSCustomObject]@{
+            FullyQualifiedErrorId = $ErrorObject.FullyQualifiedErrorId
+            MyCommand             = $ErrorObject.InvocationInfo.MyCommand
+            RequestUri            = $ErrorObject.TargetObject.RequestUri
+            ScriptStackTrace      = $ErrorObject.ScriptStackTrace
+            ErrorMessage          = ''
+        }
+        if ($ErrorObject.Exception.GetType().FullName -eq 'Microsoft.PowerShell.Commands.HttpResponseException') {
+            $httpErrorObj.ErrorMessage = $ErrorObject.ErrorDetails.Message
+        } elseif ($ErrorObject.Exception.GetType().FullName -eq 'System.Net.WebException') {
+            $httpErrorObj.ErrorMessage = [System.IO.StreamReader]::new($ErrorObject.Exception.Response.GetResponseStream()).ReadToEnd()
+        }
+        Write-Output $httpErrorObj
+    }
+}
+#endregion
+
 try {
     # Begin
     Write-Verbose 'Retrieving AccessToken'
@@ -101,17 +128,18 @@ try {
                     } | ConvertTo-Json -Depth 10
                 }
                 $responseCreateUser = Invoke-RestMethod @splatRestParams
-                if ($responseCreateUser.data.syncUsers.results[0].status -eq 'created'){
-                    $accountReference = $responseCreateUser.data.syncUsers.results[0].user.externalUserId
-                } else {
-                    $status = $responseCreateUser.data.syncUsers.results[0].status
-                    $errorMessage = "[$status]: $($responseCreateUser.data.syncUsers.results[0].errors[0].message)"
-                    throw $errorMessage
+                if ($responseCreateUser.data.syncUsers.results.count -ge 1){
+                    if ($responseCreateUser.data.syncUsers.results[0].status -eq 'created'){
+                        $accountReference = $responseCreateUser.data.syncUsers.results[0].user.externalUserId
+                    } elseif ($null -ne $responseCreateUser.data.syncUsers.results[0].errors) {
+                        $status = $responseCreateUser.data.syncUsers.results[0].status
+                        $errorMessage = "[$status]: $($responseCreateUser.data.syncUsers.results[0].errors[0].message)"
+                        throw $errorMessage
+                    }
                 }
 
                 break
             }
-
             'Correlate'{
                 Write-Verbose "Correlating ArdaOnline account for: [$($p.DisplayName)]"
                 $accountReference = $responseGetUser.data.syncUsers.results[0].user.externalUserId
@@ -127,8 +155,14 @@ try {
     }
 } catch {
     $success = $false
-    $ex = $_
-    $errorMessage = "Could not $action ArdaOnline account for: [$($p.DisplayName)]. Error: $($ex.Exception.Message)"
+    $ex = $PSItem
+    if ($($ex.Exception.GetType().FullName -eq 'Microsoft.PowerShell.Commands.HttpResponseException') -or
+    $($ex.Exception.GetType().FullName -eq 'System.Net.WebException')) {
+        $errorObj = Resolve-HTTPError -ErrorObject $ex
+        $errorMessage = "Could not $action ArdaOnline account for: [$($p.DisplayName)]. Error: $($errorObj.ErrorMessage)"
+    } else {
+        $errorMessage = "Could not $action ArdaOnline account for: [$($p.DisplayName)]. Error: $($ex.Exception.Message)"
+    }
     Write-Verbose $errorMessage
     $auditLogs.Add([PSCustomObject]@{
         Message = $errorMessage
