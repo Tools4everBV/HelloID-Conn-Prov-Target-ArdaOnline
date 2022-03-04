@@ -88,7 +88,7 @@ try {
         }
         $responseDeleteUser = Invoke-RestMethod @splatRestParams
         if ($responseDeleteUser.data.syncUsers.results.count -ge 1){
-            if ($responseDeleteUser.data.syncUsers.results[0].status -eq 'updated'){
+            if ($responseDeleteUser.data.syncUsers.results[0].status -eq 'deactivated'){
                 $success = $true
                 $auditLogs.Add([PSCustomObject]@{
                     Message = "Delete account for: [$($p.DisplayName)] was successful."
