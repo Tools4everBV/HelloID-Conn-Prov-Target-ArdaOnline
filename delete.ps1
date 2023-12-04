@@ -1,5 +1,6 @@
 #####################################################
 # HelloID-Conn-Prov-Target-ArdaOnline-Delete
+# PowerShell V1
 # Version: 1.0.0
 #####################################################
 $VerbosePreference = "Continue"
