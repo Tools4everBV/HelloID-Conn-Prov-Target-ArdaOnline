@@ -1,6 +1,6 @@
 #####################################################
 # HelloID-Conn-Prov-Target-ArdaOnline-Enable
-#
+# PowerShell V1
 # Version: 1.0.0
 #####################################################
 $VerbosePreference = "Continue"
