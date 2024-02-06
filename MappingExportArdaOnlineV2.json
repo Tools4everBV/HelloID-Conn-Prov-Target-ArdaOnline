@@ -1,0 +1,125 @@
+{
+  "Version": "v1",
+  "MappingFields": [
+    {
+      "Name": "firstName",
+      "Description": "",
+      "Type": "Text",
+      "MappingActions": [
+        {
+          "MapForActions": [
+            "Create",
+            "Update"
+          ],
+          "MappingMode": "Field",
+          "Value": "\"Person.Name.GivenName\"",
+          "UsedInNotifications": false,
+          "StoreInAccountData": false
+        }
+      ]
+    },
+    {
+      "Name": "department",
+      "Description": "",
+      "Type": "Text",
+      "MappingActions": [
+        {
+          "MapForActions": [
+            "Create",
+            "Update"
+          ],
+          "MappingMode": "Field",
+          "Value": "\"Person.PrimaryContract.Department.DisplayName\"",
+          "UsedInNotifications": false,
+          "StoreInAccountData": false
+        }
+      ]
+    },
+    {
+      "Name": "externalUserId",
+      "Description": "",
+      "Type": "Text",
+      "MappingActions": [
+        {
+          "MapForActions": [
+            "Create",
+            "Update"
+          ],
+          "MappingMode": "Field",
+          "Value": "\"Person.ExternalId\"",
+          "UsedInNotifications": false,
+          "StoreInAccountData": false
+        }
+      ]
+    },
+    {
+      "Name": "lastName",
+      "Description": "",
+      "Type": "Text",
+      "MappingActions": [
+        {
+          "MapForActions": [
+            "Create",
+            "Update"
+          ],
+          "MappingMode": "Complex",
+          "Value": "\"function updatePersonSurnameToConvention(personObject) {\\r\\n    let surname;\\r\\n\\r\\n    switch (personObject.Name.Convention) {\\r\\n        case 'B':\\r\\n            surname = `${personObject.Name.FamilyName}`;\\r\\n            if (personObject.Name.FamilyNamePrefix) {\\r\\n                surname += `, ${personObject.Name.FamilyNamePrefix}`;\\r\\n            }\\r\\n            break;\\r\\n        case 'BP':\\r\\n            surname = `${personObject.Name.FamilyName} - ${personObject.Name.FamilyNamePartnerPrefix} ${personObject.Name.FamilyNamePartner}`;\\r\\n            if (personObject.Name.FamilyNamePrefix) {\\r\\n                surname += `, ${personObject.Name.FamilyNamePrefix}`;\\r\\n            }\\r\\n            break;\\r\\n        case 'P':\\r\\n            surname = `${personObject.Name.FamilyNamePartner}`;\\r\\n            if (personObject.Name.FamilyNamePartnerPrefix) {\\r\\n                surname += `, ${personObject.Name.FamilyNamePartnerPrefix}`;\\r\\n            }\\r\\n            break;\\r\\n        case 'PB':\\r\\n            surname = `${personObject.Name.FamilyNamePartner} - ${personObject.Name.FamilyNamePrefix} ${personObject.Name.FamilyName}`;\\r\\n            if (personObject.Name.FamilyNamePartnerPrefix) {\\r\\n                surname += `, ${personObject.Name.FamilyNamePartnerPrefix}`;\\r\\n            }\\r\\n            break;\\r\\n        default:\\r\\n            surname = `${personObject.Name.FamilyName}`;\\r\\n            if (personObject.Name.FamilyNamePrefix) {\\r\\n                surname += `, ${personObject.Name.FamilyNamePrefix}`;\\r\\n            }\\r\\n            break;\\r\\n    }\\r\\n\\r\\n    return surname;\\r\\n}\\r\\n\\r\\nupdatePersonSurnameToConvention(Person);\\r\\n\"",
+          "UsedInNotifications": false,
+          "StoreInAccountData": false
+        }
+      ]
+    },
+    {
+      "Name": "expiresAt",
+      "Description": "",
+      "Type": "Text",
+      "MappingActions": [
+        {
+          "MapForActions": [
+            "Enable",
+            "Delete"
+          ],
+          "MappingMode": "None",
+          "Value": "\"\"",
+          "UsedInNotifications": false,
+          "StoreInAccountData": false
+        }
+      ]
+    },
+    {
+      "Name": "locale",
+      "Description": "",
+      "Type": "Text",
+      "MappingActions": [
+        {
+          "MapForActions": [
+            "Create",
+            "Update"
+          ],
+          "MappingMode": "Fixed",
+          "Value": "\"nl\"",
+          "UsedInNotifications": false,
+          "StoreInAccountData": false
+        }
+      ]
+    },
+    {
+      "Name": "email",
+      "Description": "",
+      "Type": "Text",
+      "MappingActions": [
+        {
+          "MapForActions": [
+            "Create",
+            "Update"
+          ],
+          "MappingMode": "Complex",
+          "Value": "\"function getActiveDirectoryEmail(){\\n  return Person.Accounts.MicrosoftActiveDirectory.mail\\n}\\ngetActiveDirectoryEmail();\"",
+          "UsedInNotifications": false,
+          "StoreInAccountData": false
+        }
+      ]
+    }
+  ],
+  "UniqueFieldNames": []
+}
